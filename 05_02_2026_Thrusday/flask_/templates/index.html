@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} Home {% end block %}</title>
+</head>
+
+<body>
+
+<nav>Home | About| User </nav>
+  {%block body%}         <!-- use of jinja2 -->
+
+    <h1>Hello World!</h1>
+    <h2> {{message}}</h2>  <!-- This is used to display dynamic data -->
+
+  {% end block %}
+<footer> Footer </footer>
+
+</body>
+</html>
