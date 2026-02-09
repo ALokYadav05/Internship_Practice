@@ -18,8 +18,13 @@ class Students(BaseModel):
     age: Optional[int] = None
     height: Optional[float] = None
 
+class Students2(BaseModel):
+    name: str
+    age: int
+    height: float
 
-@app.get("/get/{id_}")
+
+@app.get("/get/{id_}", tags=["Students"])
 async def get_item(id_: int):
     if id_ not in student:
         return {"message": "Student not found"}
@@ -29,15 +34,16 @@ async def get_item(id_: int):
 @app.post("/items/post")
 async def add_student(data:Students):
     _id = len(student) + 1
-    student[_id] = data
+    student[_id] = data.to_dict()
     return {"message": "Student added successfully", "student": student[_id]}
 
 
 @app.put("/items/{id_}")
-async def update_item(id_: int, data:Students):
+async def update_item(id_: int, data:Students2):
     if id_ in student:
-        student[id_] = data
+        student[id_] = data.to_dict()
         return {"message": "Student updated successfully", "student": student[id_]}
+    return None
 
 
 @app.patch("/items/{id_}")
@@ -45,9 +51,9 @@ async def update_item1(id_: int, data:Students):
     if id_ in student:
         if data.name:
             student[id_]["name"] = data.name
-        elif data.age:
+        if data.age:
             student[id_]["age"] = int(data.age)
-        else:
+        if data.height:
             student[id_]["height"] = float(data.height)
         return {"message": "Student updated successfully", "student": student[id_]}
     else:
