@@ -4,8 +4,6 @@ import pandas as pd
 import time
 
 
-
-
 def connect_to_website():
     url = 'https://www.scrapethissite.com/pages/forms/'
     response = requests.get(url)
@@ -106,4 +104,4 @@ if __name__ == '__main__':
     soup_obj = connect_to_website()
     # scrape_table(soup_obj)
     pagination()
-    # pagination2()f
+    # pagination2()
