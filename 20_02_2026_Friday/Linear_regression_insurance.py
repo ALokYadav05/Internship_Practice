@@ -31,7 +31,7 @@ def load_preprocess_encode_scale_modeltrain_metrics():
 
     print(df['children'].value_counts())
 
-    print(df['region'].value_counts())
+    print(df['region'].value_counts())   # number-of-occurrence
     print(df['region'].mode())
 
     # Histogram-plot for Target-column
