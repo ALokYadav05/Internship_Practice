@@ -5,6 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.preprocessing import StandardScaler
+from sklearn.tree import plot_tree
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -177,17 +178,16 @@ def split_train_evaluate(df):
 
         classifier = DecisionTreeClassifier(max_depth=5, random_state=69, max_leaf_nodes=20,class_weight='balanced')
         classifier.fit(x_train, y_train)
-        classifier.fit(x_train, y_train)
-        classifier.fit(x_train, y_train)
-        classifier.fit(x_train, y_train)
         y_predict = classifier.predict(x_test)
         print(f"Accuracy : {accuracy_score(y_test, y_predict)*100:.2f}%", end=separate)
         print(f"Classification Report:\n\n {classification_report(y_test, y_predict)}", end=separate)
         print(f"Confusion Matrix:\n\n {confusion_matrix(y_test, y_predict)}", end=separate)
+        plt.figure(figsize=(15,5))
+        plot_tree(classifier)
+        plt.show()
 
     except Exception as e:
         print(f"Error While Split Train Evaluate : {e}")
-
 
 def main_func():
     """
