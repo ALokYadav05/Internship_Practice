@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 import warnings
 warnings.filterwarnings('ignore')
 
-
 separate = f"\n\n{'--' * 100}\n\n"  # this is used only to separate print statements
 pd.set_option('display.width', None)  # used to display  all columns while printing
 
@@ -20,21 +19,37 @@ class MSSQLDatabase:
         """
         self.connection_string = f"mssql+pyodbc://{server}/{database}?driver={driver}"  #connection-string
         try:
+            self.df = None
+            self.table_name = 'diabetes'
             self.engine = create_engine(self.connection_string)
             print("Engine created successfully!")
         except ConnectionError:
             print("Connection Error")
 
-    def loadTable(self, table_name):
+    def loadTable(self):
         """
         This method is used to load data from MSSQL database
+        :return : dataframe,table
         """
         try:
-            query = f"SELECT * FROM {table_name}"
-            df = pd.read_sql(query, self.engine)
-            return df
+            query = f"SELECT * FROM {self.table_name}"
+            self.df = pd.read_sql(query, self.engine)
+            return self.df, self.table_name
         except FileNotFoundError:
             print("Table not found")
+
+    def save_prediction(self,predict):
+        """
+        This function is used to save the prediction back to database
+        :return: None
+        """
+        try:
+            self.df['Predicted'] = predict
+            self.df.to_sql(self.table_name, self.engine, if_exists='replace', index=False)
+            print("Predictions  Added successfully in Database!!")
+        except Exception as e:
+            print(f"Error while saving prediction: {e}", end=separate)
+
 
 class Classifier:
     def __init__(self,df):
@@ -45,6 +60,7 @@ class Classifier:
         self.x_test = None
         self.y_train = None
         self.y_test = None
+        self.clf = None
         self.numerical_cols = None
         self.y_predict = None
 
@@ -90,7 +106,6 @@ class Classifier:
         """
         try:
             self.numerical_cols = [col for col in self.df.select_dtypes(exclude=('object','str')).columns if col != 'Outcome']
-
             # Box-Plot
             plt.figure(figsize=(15, 6))
             plt.title("Box-plot for Numeric Columns", weight='bold', fontsize=20, color='Maroon')
@@ -119,8 +134,7 @@ class Classifier:
             plt.show()
 
             # Pair-plot
-            plt.figure(figsize=(20, 10))
-            sns.pairplot(self.df, hue='smoker', palette='viridis', corner=True)
+            sns.pairplot(self.df, hue='Outcome', palette='viridis', corner=True)
             plt.show()
 
         except Exception as e:
@@ -151,8 +165,8 @@ class Classifier:
         :return: None
         """
         try:
-            self.x = self.df.iloc[:, :-1]
-            self.y = self.df.iloc[:, -1]
+            self.x = self.df[["Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"]]
+            self.y = self.df["Outcome"]
 
             self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y, test_size=0.3,
                                                                                     random_state=1)
@@ -166,22 +180,27 @@ class Classifier:
         :return: None
         """
         try:
-            clf = RandomForestClassifier(n_estimators=100, random_state=1, ccp_alpha=0.008, min_samples_split=2, max_depth=6)
-            clf.fit(self.x_train, self.y_train)
-            self.y_predict = clf.predict(self.x_test)
-
+            self.clf = RandomForestClassifier(n_estimators=100, random_state=1, ccp_alpha=0.008, min_samples_split=2, max_depth=6)
+            self.clf.fit(self.x_train, self.y_train)
+            self.y_predict = self.clf.predict(self.x_test)
         except Exception as e:
             print(f"Error while training: {e}", end=separate)
 
-    def evaluationMetrics(self):
+
+    def evaluation_Metrics_And_SavePrediction(self):
         """
-        This function is used to evaluate the model
-        :return: None
+        This function is used to evaluate the model, and predict the x, so that we can insert prediction into db
+        :return: predicted
         """
         try:
             print(f" Accuracy: {accuracy_score(self.y_test, self.y_predict)*100:.2f}%", end=separate)
             print(f"Confusion-Matrix: \n\n{confusion_matrix(self.y_test, self.y_predict)}", end=separate)
             print(f"Classification-report: \n\n{classification_report(self.y_test, self.y_predict)}", end=separate)
+
+            # This is used to add prediction column into SQLSERVER-Database
+            predicted = self.clf.predict(self.x)
+            predicted = ["Diabetes" if i==1  else "Non-diabetes" for i in predicted]
+            return predicted
 
         except Exception as e:
             print(f"Error while evaluation: {e}", end=separate)
@@ -192,8 +211,8 @@ def main():
     database = "alok"
 
     # Initialize loader
-    loader = MSSQLDatabase(server, database)
-    df = loader.loadTable("diabetes")
+    loader = MSSQLDatabase(server, database)  # object
+    df, table_name = loader.loadTable()
     c1 = Classifier(df)
     c1.displayData()
     c1.dataUnderstanding()
@@ -202,7 +221,8 @@ def main():
     c1.outliers()
     c1.splitData()
     c1.trainingData()
-    c1.evaluationMetrics()
+    predicted = c1.evaluation_Metrics_And_SavePrediction()
+    loader.save_prediction(predicted)     # this is used to save prediction in database
 
 if __name__ == "__main__":
     main()
