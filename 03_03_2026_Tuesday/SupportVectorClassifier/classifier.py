@@ -25,12 +25,20 @@ class Classifier:
         self.y_predicted = None
 
     def load_data(self):
+        """
+        This function is used to load the data
+        :return: None
+        """
         try:
           self.df = pd.read_csv("../Dataset/user-data.csv")
         except Exception as e:
             print(f"Error while loading data: {e}")
 
     def display_data(self):
+        """
+        This function is used to display top 5, last 5 and random 5 data
+        :return: None
+        """
         try:
             print(f"Head: \n\n{self.df.head()}", end=separate)
             print(f"Tail: \n\n{self.df.tail()}", end=separate)
@@ -40,16 +48,23 @@ class Classifier:
             print(f"Error while displaying data: {e}")
 
     def data_preprocess(self):
+        """
+        This function is used to understand the data and stats of it
+        :return: None
+        """
         try:
             print("Columns : ",self.df.columns.tolist(), end=separate)
             print("Data-types: \n", self.df.dtypes, end=separate)
             print(self.df.info(), end=separate)
             print("Stats : \n", self.df.describe(), end=separate)
-            # self.df.drop("user_id", axis=1, inplace=True)
         except Exception as e:
             print(f"Error while preprocessing: {e}")
 
     def check_null_duplicates(self):
+        """
+        This function is used to check null and duplicated values
+        :return: None
+        """
         try:
             print("Null-Values: \n\n", self.df.isnull().sum(), end=separate)
             print("Duplicates: ", self.df.duplicated().sum(), end=separate)
@@ -57,6 +72,10 @@ class Classifier:
             print(f"Error while preprocessing: {e}")
 
     def EDA(self):
+        """
+        This function is used to plot Heatmap and pair-plot
+        :return: None
+        """
         try:
             #heat-Map
             plt.figure(figsize=(10,10))
@@ -70,6 +89,10 @@ class Classifier:
             print(f"Error while plotting: {e}")
 
     def outlier_detection(self):
+        """
+        This function is used find the outliers
+        :return: None
+        """
         try:
             self.numeric_cols = self.df.select_dtypes(include='number').drop(columns=['purchased']).columns.tolist()
             for i, col in enumerate(self.numeric_cols):
@@ -85,6 +108,10 @@ class Classifier:
           print(f"Error while checking-outliers: {e}")
 
     def split(self):
+        """
+        This function is used to split the data into train and test
+        :return: None
+        """
         try:
             self.x = self.df.iloc[:,:-1]
             self.y = self.df.iloc[:,-1]
@@ -93,6 +120,10 @@ class Classifier:
             print(f"Error while splitting: {e}")
 
     def encoding_and_scaling(self):
+        """
+        This function is used to encode and scale the data
+        :return: None
+        """
         try:
             ohe = OrdinalEncoder()
             self.x_train["gender"] = ohe.fit_transform(self.x_train[["gender"]])
@@ -105,6 +136,10 @@ class Classifier:
             print(f"Error while encoding: {e}")
 
     def training(self):
+        """
+        This function is used to train the Model
+        :return: None
+        """
         try:
             self.clf = SVC(kernel='linear', random_state=1)
             self.clf.fit(self.x_train, self.y_train)
@@ -113,6 +148,10 @@ class Classifier:
             print(f"Error while training: {e}")
 
     def evaluation(self):
+        """
+        This function is used to evaluate the model
+        :return: None
+        """
         try:
             print(f" Accuracy-Score: {accuracy_score(self.y_test, self.y_predicted)*100:.2f}%", end=separate)
             print(f"Classification Report: \n\n{classification_report(self.y_test, self.y_predicted)}", end=separate)
@@ -121,6 +160,10 @@ class Classifier:
             print(f"Error while Evaluation: {e}")
 
     def plot_confusion_matrix(self):
+        """
+        This function is used to plot the confusion matrix
+        :return: None
+        """
         try:
             # plotting confusion-Matrix
             cm = confusion_matrix(self.y_test, self.y_predicted)
