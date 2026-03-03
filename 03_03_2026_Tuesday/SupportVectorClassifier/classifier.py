@@ -1,8 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import warnings
@@ -62,12 +63,13 @@ class Classifier:
 
     def check_null_duplicates(self):
         """
-        This function is used to check null and duplicated values
+        This function is used to check null and duplicated values and dropped id column
         :return: None
         """
         try:
             print("Null-Values: \n\n", self.df.isnull().sum(), end=separate)
             print("Duplicates: ", self.df.duplicated().sum(), end=separate)
+            self.df = self.df.drop('user_id', axis=1)  # dropping the id columns
         except Exception as e:
             print(f"Error while preprocessing: {e}")
 
@@ -125,9 +127,9 @@ class Classifier:
         :return: None
         """
         try:
-            ohe = OrdinalEncoder()
-            self.x_train["gender"] = ohe.fit_transform(self.x_train[["gender"]])
-            self.x_test["gender"] = ohe.transform(self.x_test[["gender"]])
+            encoder = OrdinalEncoder()
+            self.x_train["gender"] = encoder.fit_transform(self.x_train[["gender"]])
+            self.x_test["gender"] = encoder.transform(self.x_test[["gender"]])
 
             scaler = StandardScaler()
             self.x_train = scaler.fit_transform(self.x_train)
@@ -141,9 +143,17 @@ class Classifier:
         :return: None
         """
         try:
-            self.clf = SVC(kernel='linear', random_state=1)
-            self.clf.fit(self.x_train, self.y_train)
-            self.y_predicted = self.clf.predict(self.x_test)
+            self.clf = SVC(random_state=1)
+
+            params = {
+             'C': [0.1, 1, 10, 25, 50, 100] ,
+             'kernel': ['linear', 'poly', 'rbf'],
+             'gamma' : ['scale', 'auto'],
+            }
+            grid = GridSearchCV(estimator=self.clf, param_grid=params, cv=5, scoring='accuracy', n_jobs=-1,verbose=2)
+            grid.fit(self.x_train, self.y_train)
+            self.y_predicted = grid.predict(self.x_test)
+            print(grid.best_params_,end = separate)
         except Exception as e:
             print(f"Error while training: {e}")
 
@@ -174,6 +184,35 @@ class Classifier:
         except Exception as e:
             print(f"Error while plotting after evaluation : {e}")
 
+    def plot_boundary(self):
+        """
+        This function is used to plot a decision-boundary for two features
+        :return: None
+        """
+        try:
+            X_plot = self.x_train[:, :2]  # Taking Age and Salary (first two columns)
+            y_plot = self.y_train
+
+            plot_clf = SVC(kernel='linear', random_state=1)
+            plot_clf.fit(X_plot, y_plot)
+
+            #  Using Scikit-learn's built-in display tool
+            disp = DecisionBoundaryDisplay.from_estimator(
+                plot_clf,
+                X_plot,
+                response_method="predict",
+                alpha=0.3,
+                cmap='coolwarm'
+            )
+            #  Overlay the actual data points
+            plt.scatter(X_plot[:, 0], X_plot[:, 1], c=y_plot, edgecolor="k", cmap='coolwarm')
+            plt.title("SVM Decision Boundary (Age vs Salary)")
+            plt.xlabel("Scaled Age")
+            plt.ylabel("Scaled Salary")
+            plt.show()
+        except Exception as e:
+            print(f"Error while plotting boundary: {e}")
+
 def main():
     c1 = Classifier()
     c1.load_data()
@@ -187,6 +226,7 @@ def main():
     c1.training()
     c1.evaluation()
     c1.plot_confusion_matrix()
+    c1.plot_boundary()
 
 
 if __name__ == '__main__':
