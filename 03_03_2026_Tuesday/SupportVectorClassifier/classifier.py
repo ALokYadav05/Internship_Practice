@@ -28,7 +28,7 @@ class Classifier:
 
     def load_data(self):
         """
-        This function is used to load the data
+        This method is used to load the data
         :return: None
         """
         try:
@@ -38,7 +38,7 @@ class Classifier:
 
     def display_data(self):
         """
-        This function is used to display top 5, last 5 and random 5 data
+        This method is used to display top 5, last 5 and random 5 data
         :return: None
         """
         try:
@@ -51,7 +51,7 @@ class Classifier:
 
     def data_preprocess(self):
         """
-        This function is used to understand the data and stats of it
+        This method is used to understand the data and stats of it
         :return: None
         """
         try:
@@ -64,7 +64,7 @@ class Classifier:
 
     def check_null_duplicates(self):
         """
-        This function is used to check null and duplicated values and dropped id column
+        This method is used to check null and duplicated values and dropped id column
         :return: None
         """
         try:
@@ -76,7 +76,7 @@ class Classifier:
 
     def EDA(self):
         """
-        This function is used to plot Heatmap and pair-plot
+        This method is used to plot Heatmap and pair-plot
         :return: None
         """
         try:
@@ -93,7 +93,7 @@ class Classifier:
 
     def outlier_detection(self):
         """
-        This function is used find the outliers
+        This method is used find the outliers
         :return: None
         """
         try:
@@ -112,7 +112,7 @@ class Classifier:
 
     def split(self):
         """
-        This function is used to split the data into train and test
+        This method is used to split the data into train and test
         :return: None
         """
         try:
@@ -124,7 +124,7 @@ class Classifier:
 
     def encoding_and_scaling(self):
         """
-        This function is used to encode and scale the data
+        This method is used to encode and scale the data
         :return: None
         """
         try:
@@ -146,7 +146,7 @@ class Classifier:
 
     def training(self):
         """
-        This function is used to train the Model
+        This method is used to train the Model
         :return: None
         """
         try:
@@ -166,7 +166,7 @@ class Classifier:
 
     def evaluation(self):
         """
-        This function is used to evaluate the model
+        This method is used to evaluate the model
         :return: None
         """
         try:
@@ -178,7 +178,7 @@ class Classifier:
 
     def plot_confusion_matrix(self):
         """
-        This function is used to plot the confusion matrix
+        This method is used to plot the confusion matrix
         :return: None
         """
         try:
@@ -193,26 +193,26 @@ class Classifier:
 
     def plot_boundary(self):
         """
-        This function is used to plot a decision-boundary for two features
+        This method is used to plot a decision-boundary for two features
         :return: None
         """
         try:
-            X_plot = self.x_train[:, :2]  # Taking Age and Salary (first two columns)
+            x_plot = self.x_train[:, :2]  # Taking Age and Salary (first two columns)
             y_plot = self.y_train
 
             plot_clf = SVC(kernel='linear', random_state=1)
-            plot_clf.fit(X_plot, y_plot)
+            plot_clf.fit(x_plot, y_plot)
 
             #  Using Scikit-learn's built-in display tool
             disp = DecisionBoundaryDisplay.from_estimator(
                 plot_clf,
-                X_plot,
+                x_plot,
                 response_method="predict",
                 alpha=0.3,
                 cmap='coolwarm'
             )
             #  Overlay the actual data points
-            plt.scatter(X_plot[:, 0], X_plot[:, 1], c=y_plot, edgecolor="k", cmap='coolwarm')
+            plt.scatter(x_plot[:, 0], x_plot[:, 1], c=y_plot, edgecolor="k", cmap='coolwarm')
             plt.title("SVM Decision Boundary (Age vs Salary)")
             plt.xlabel("Scaled Age")
             plt.ylabel("Scaled Salary")
