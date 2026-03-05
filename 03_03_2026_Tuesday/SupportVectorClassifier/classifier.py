@@ -1,8 +1,9 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.preprocessing import StandardScaler, OrdinalEncoder
+from sklearn.preprocessing import StandardScaler, OrdinalEncoder, OneHotEncoder
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -127,13 +128,19 @@ class Classifier:
         :return: None
         """
         try:
-            encoder = OrdinalEncoder()
-            self.x_train["gender"] = encoder.fit_transform(self.x_train[["gender"]])
-            self.x_test["gender"] = encoder.transform(self.x_test[["gender"]])
+            cat_cols = ['gender']                      #categorical-cols
+            num_cols = ['age', 'estimated_salary']     #numerical-cols
+
+            ohe = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
+            train_cat = ohe.fit_transform(self.x_train[cat_cols])
+            test_cat = ohe.transform(self.x_test[cat_cols])
 
             scaler = StandardScaler()
-            self.x_train = scaler.fit_transform(self.x_train)
-            self.x_test = scaler.transform(self.x_test)
+            train_num = scaler.fit_transform(self.x_train[num_cols])
+            test_num = scaler.transform(self.x_test[num_cols])
+
+            self.x_train = np.hstack([train_cat, train_num])        # combining using horizontal-stack
+            self.x_test = np.hstack([test_cat, test_num])
         except Exception as e:
             print(f"Error while encoding: {e}")
 
