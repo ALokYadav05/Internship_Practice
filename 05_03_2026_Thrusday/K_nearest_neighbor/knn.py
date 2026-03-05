@@ -1,12 +1,13 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.preprocessing import StandardScaler, OrdinalEncoder, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, confusion_matrix
+import joblib
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -23,8 +24,13 @@ class Classifier:
         self.y_test = None
         self.numeric_cols = None
         self.categorical_cols = None
+        self.scaler = StandardScaler()
+        self.encoder = OneHotEncoder(handle_unknown='ignore')
         self.clf = None
         self.y_predicted = None
+        self.preprocessor_pipeline = None
+        self.pipeline = None
+        self.model = None
 
     def load_data(self):
         """
@@ -42,6 +48,7 @@ class Classifier:
         :return: None
         """
         try:
+            self.load_data()
             print(f"Head: \n\n{self.df.head()}", end=separate)
             print(f"Tail: \n\n{self.df.tail()}", end=separate)
             print(f"sample: \n\n{self.df.sample(5)}", end=separate)
@@ -55,6 +62,7 @@ class Classifier:
         :return: None
         """
         try:
+            self.display_data()
             print("Columns : ",self.df.columns.tolist(), end=separate)
             print("Data-types: \n", self.df.dtypes, end=separate)
             print(self.df.info(), end=separate)
@@ -68,6 +76,7 @@ class Classifier:
         :return: None
         """
         try:
+            self.data_preprocess()
             print("Null-Values: \n\n", self.df.isnull().sum(), end=separate)
             print("Duplicates: ", self.df.duplicated().sum(), end=separate)
             self.df = self.df.drop('user_id', axis=1)  # dropping the id columns
@@ -80,11 +89,13 @@ class Classifier:
         :return: None
         """
         try:
+            self.check_null_duplicates()
             #heat-Map
             plt.figure(figsize=(10,10))
             sns.heatmap(self.df.corr(numeric_only=True),annot=True, cmap='coolwarm')
             plt.title("Correlation-Matrix", weight=20, fontsize=20, color='red')
             plt.show()
+
             #pair-plot
             sns.pairplot(self.df,hue='gender', palette='rocket', corner=True)
             plt.show()
@@ -97,6 +108,7 @@ class Classifier:
         :return: None
         """
         try:
+            self.EDA()
             self.numeric_cols = self.df.select_dtypes(include='number').drop(columns=['purchased']).columns.tolist()
             for i, col in enumerate(self.numeric_cols):
                 q1 = self.df[col].quantile(0.25)
@@ -110,130 +122,98 @@ class Classifier:
         except Exception as e:
           print(f"Error while checking-outliers: {e}")
 
-    def split(self):
+    def split_train_test(self):
         """
         This method is used to split the data into train and test
         :return: None
         """
         try:
+            self.outlier_detection()
             self.x = self.df.iloc[:,:-1]
             self.y = self.df.iloc[:,-1]
             self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y, test_size=0.2, random_state=1)
         except Exception as e:
             print(f"Error while splitting: {e}")
 
-    def encoding_and_scaling(self):
+    def pipeline_creation(self):
         """
-        This method is used to encode and scale the data
+        This method creates pipeline for preprocessing and transforming data
         :return: None
         """
         try:
-            cat_cols = ['gender']                      #categorical-cols
-            num_cols = ['age', 'estimated_salary']     #numerical-cols
+            self.split_train_test()
+            numeric_features = self.df.select_dtypes(include='int64').columns.drop("purchased")
+            cat_features = self.df.select_dtypes(include='object').columns
 
-            ohe = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
-            train_cat = ohe.fit_transform(self.x_train[cat_cols])
-            test_cat = ohe.transform(self.x_test[cat_cols])
+            self.preprocessor_pipeline = ColumnTransformer(
+                                                transformers=[
+                                                            ('num',self.scaler,numeric_features),
+                                                            ('cat',self.encoder,cat_features)
+                                                        ],
+                                               remainder='passthrough')
 
-            scaler = StandardScaler()
-            train_num = scaler.fit_transform(self.x_train[num_cols])
-            test_num = scaler.transform(self.x_test[num_cols])
-
-            self.x_train = np.hstack([train_cat, train_num])        # combining using horizontal-stack
-            self.x_test = np.hstack([test_cat, test_num])
+            print("Preprocessing Pipeline created", end=separate)
         except Exception as e:
-            print(f"Error while encoding: {e}")
+            print("Error while creating pipeline", e)
 
-    def training(self):
+    def model_training(self):
         """
-        This method is used to train the Model
+        This method is used to trains the model
         :return: None
         """
         try:
-            self.clf = SVC(random_state=1)
-
-            params = {
-             'C': [0.1, 1, 10, 25, 50, 100] ,
-             'kernel': ['linear', 'poly', 'rbf'],
-             'gamma' : ['scale', 'auto'],
+            self.pipeline_creation()
+            self.model = KNeighborsClassifier()
+            self.pipeline = Pipeline(steps=[('preprocessor', self.preprocessor_pipeline),
+                                            ('classifier',self.model)])
+            param_grid = {
+                "classifier__n_neighbors": [3, 5, 7, 9, 11],
+                "classifier__weights": ["uniform", "distance"],
+                "classifier__metric": ["euclidean", "manhattan", "minkowski"]
             }
-            grid = GridSearchCV(estimator=self.clf, param_grid=params, cv=5, scoring='accuracy', n_jobs=-1,verbose=2)
+            print("Starting Grid Search CV... this may take a while...\n")
+
+            grid= GridSearchCV(self.pipeline, param_grid, refit=True, verbose=2, cv=5)
             grid.fit(self.x_train, self.y_train)
-            self.y_predicted = grid.predict(self.x_test)
-            print(grid.best_params_,end = separate)
+            self.pipeline = grid.best_estimator_
+            self.model = grid.best_estimator_.named_steps["classifier"]
+            print(end=separate)
+            print(f"Best Parameters:{grid.best_params_}\n")
+            print("Model Training Done", end=separate)
         except Exception as e:
-            print(f"Error while training: {e}")
+            print("Error while training model training", e)
 
-    def evaluation(self):
+    def model_performance(self):
         """
-        This method is used to evaluate the model
+        This method is used to checks model performance on test data
         :return: None
         """
         try:
-            print(f" Accuracy-Score: {accuracy_score(self.y_test, self.y_predicted)*100:.2f}%", end=separate)
-            print(f"Classification Report: \n\n{classification_report(self.y_test, self.y_predicted)}", end=separate)
-            print(f"Confusion Matrix: \n\n{confusion_matrix(self.y_test, self.y_predicted)}", end=separate)
+            self.model_training()
+            y_prediction = self.pipeline.predict(self.x_test)
+            print(f"Confusion Matrix\n")
+            print(confusion_matrix(self.y_test, y_prediction))
+            print("\nClassification Report\n")
+            print(classification_report(self.y_test, y_prediction))
         except Exception as e:
-            print(f"Error while Evaluation: {e}")
+            print("Error checking model performance", e)
 
-    def plot_confusion_matrix(self):
+    def save_model(self):
         """
-        This method is used to plot the confusion matrix
+        This method saves the model
         :return: None
         """
+        self.model_performance()
         try:
-            # plotting confusion-Matrix
-            cm = confusion_matrix(self.y_test, self.y_predicted)
-            plt.figure(figsize=(10, 10))
-            sns.heatmap(cm, annot=True, cmap='rocket')
-            plt.title("Confusion Matrix", weight=20, fontsize=20, color='red')
-            plt.show()
+            joblib.dump(self.pipeline, filename='../Model/Model.pkl')
+            print("Model Saved Successfully!!")
         except Exception as e:
-            print(f"Error while plotting after evaluation : {e}")
+            print("Error while saving model", e)
 
-    def plot_boundary(self):
-        """
-        This method is used to plot a decision-boundary for two features
-        :return: None
-        """
-        try:
-            x_plot = self.x_train[:, :2]  # Taking Age and Salary (first two columns)
-            y_plot = self.y_train
-
-            plot_clf = SVC(kernel='linear', random_state=1)
-            plot_clf.fit(x_plot, y_plot)
-
-            #  Using Scikit-learn's built-in display tool
-            disp = DecisionBoundaryDisplay.from_estimator(
-                plot_clf,
-                x_plot,
-                response_method="predict",
-                alpha=0.3,
-                cmap='coolwarm'
-            )
-            #  Overlay the actual data points
-            plt.scatter(x_plot[:, 0], x_plot[:, 1], c=y_plot, edgecolor="k", cmap='coolwarm')
-            plt.title("SVM Decision Boundary (Age vs Salary)")
-            plt.xlabel("Scaled Age")
-            plt.ylabel("Scaled Salary")
-            plt.show()
-        except Exception as e:
-            print(f"Error while plotting boundary: {e}")
 
 def main():
     c1 = Classifier()
-    c1.load_data()
-    c1.display_data()
-    c1.data_preprocess()
-    c1.check_null_duplicates()
-    c1.EDA()
-    c1.outlier_detection()
-    c1.split()
-    c1.encoding_and_scaling()
-    c1.training()
-    c1.evaluation()
-    c1.plot_confusion_matrix()
-    c1.plot_boundary()
+    c1.save_model()
 
 
 if __name__ == '__main__':
