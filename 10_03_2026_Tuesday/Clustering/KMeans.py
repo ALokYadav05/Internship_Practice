@@ -1,8 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler , OneHotEncoder
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -35,7 +37,6 @@ class Cluster:
         """
         try:
             self.read_data()
-
             print(f"Columns: {self.df.columns.tolist()}",end=separator)
             self.df.info()
             print(end=separator)
@@ -50,7 +51,6 @@ class Cluster:
         """
         try:
             self.data_understanding()
-
             print(f"Null-Values:\n\n{self.df.isnull().sum()}",end=separator)
             print(f"Total-duplicates: {self.df.duplicated().sum()}",end=separator)
         except Exception as e:
@@ -63,7 +63,6 @@ class Cluster:
         """
         try:
            self.check_null_duplicates()
-
            self.df.drop(columns=['CustomerID'], inplace=True)
         except Exception as e:
             print(f"Error While dropping unnecessary column: {e}")
@@ -75,9 +74,8 @@ class Cluster:
         """
         try:
             self.drop_unnecessary_column()
-
             self.numeric_feat = self.df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-            plt.figure(figsize = (20,10))
+            plt.figure(figsize = (15,10))
             for i, col in enumerate(self.numeric_feat):
                 plt.subplot(1,3,i+1)
                 sns.boxplot(self.df[col], palette='muted')
@@ -85,7 +83,7 @@ class Cluster:
             plt.tight_layout()
             plt.show()
 
-            plt.figure(figsize = (20,10))
+            plt.figure(figsize = (25,10))
             sns.heatmap(self.df.corr(numeric_only=True), annot=True, cmap='viridis')
             plt.title('Correlation Matrix', fontsize = 20, weight='semibold', color='red')
             plt.show()
@@ -106,7 +104,6 @@ class Cluster:
         """
         try:
              self.eda()
-
              gender_encoded = self.encoder.fit_transform(self.df[['Gender']])
              column_name = self.encoder.get_feature_names_out(['Gender'])[0]
              self.df[column_name] = gender_encoded
@@ -122,7 +119,6 @@ class Cluster:
         """
         try:
             self.feature_encoding()
-
             scaled = self.scaler.fit_transform(self.df)
             self.df = pd.DataFrame(scaled, columns=self.df.columns)
         except Exception as e:
@@ -135,16 +131,16 @@ class Cluster:
         """
         try:
             self.feature_scaling()
-
             self.wcss = []
+            plt.figure(figsize=(15,10))
             for i in range(1, 11):
-                kmeans = KMeans(n_clusters=i, random_state=42)
+                kmeans = KMeans(n_clusters=i, random_state=1)
                 kmeans.fit(self.df)
                 self.wcss.append(kmeans.inertia_)
-            plt.plot(range(1, 11), self.wcss, marker='o')
+            sns.lineplot(self.wcss, marker='o', color='red')
             plt.title("Elbow Method", color='red', fontsize=20, weight='bold')
-            plt.xlabel("Number of clusters", fontsize=20, weight='bold')
-            plt.ylabel("WCSS", fontsize=20, weight='bold')
+            plt.xlabel("Number of clusters", fontsize=10, weight='semibold')
+            plt.ylabel("WCSS", fontsize=10, weight='semibold')
             plt.show()
         except Exception as e:
             print("Error in elbow method", e)
@@ -158,9 +154,20 @@ class Cluster:
             self.elbow_method()
             self.model = KMeans(n_clusters=6, random_state=1)
             self.df["Clusters_formed"] = self.model.fit_predict(self.df)
-            print("Training completed and clusters assigned", end=separator)
         except Exception as e:
             print("Error in training the model", e)
+
+    def evaluation(self):
+        """
+        This method is used to evaluate the model
+        :return: None
+        """
+        try:
+            self.training()
+            score = silhouette_score(self.df, self.df['Clusters_formed'])
+            print(f"Silhouette score: {score}", end=separator)
+        except Exception as e:
+            print("Error in evaluation", e)
 
     def visualize_clusters(self):
         """
@@ -168,22 +175,21 @@ class Cluster:
         :return: None
         """
         try:
-            self.training()
-            plt.figure(figsize=(10, 7))
+            self.evaluation()
+            plt.figure(figsize=(15, 10))
             sns.scatterplot(x=self.df["Annual Income (k$)"], y=self.df["Spending Score (1-100)"],
-                            hue=self.df["Clusters_formed"], palette="Set1")
+                            hue=self.df["Clusters_formed"], palette="viridis")
             centers = self.model.cluster_centers_
             plt.scatter(centers[:, 2], centers[:, 3], s=300, marker='*', c='black', label='Centroids')
             plt.title("Customer Segments", color='red', fontsize=20, weight='bold')
             plt.legend()
             plt.show()
-            print("Customer Segmentation Visualization Completed", end=separator)
         except Exception as e:
             print("Error in visualizing clusters", e)
 
 def main():
     c1 = Cluster()
-    c1.feature_scaling()
+    c1.visualize_clusters()
 
 if __name__ == "__main__":
     main()
