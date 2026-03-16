@@ -2,6 +2,10 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -14,7 +18,9 @@ class DLClassifier:
         self.y_train = None
         self.x_test = None
         self.y_test = None
-        self.encoder = LabelEncoder()
+        self.encoder = OneHotEncoder(handle_unknown="ignore")
+        self.scaler = StandardScaler()
+        self.preprocessor = None
 
     def read_data(self):
         try:
@@ -56,6 +62,24 @@ class DLClassifier:
         sns.heatmap(corr, annot=True, cmap='coolwarm')
         plt.title("Feature Correlation Heatmap", weight='semibold', color='red', fontsize=15)
         plt.show()
+
+    def preprocessing_pipeline(self):
+        numeric_features = ["Age", "Fare", "Pclass", "FamilySize"]
+        category_features = ["Embarked", "Sex"]
+
+        # pipeline for preprocessing numeric features
+        numeric_pipeline = Pipeline([
+            ("scaler", self.scaler),
+        ])
+        # pipeline for preprocessing categorical features
+        categorical_pipeline = Pipeline([
+            ("encoder", self.encoder),
+        ])
+        # Applying Transformation to individual features
+        self.preprocessor = ColumnTransformer([
+            ("numeric", numeric_pipeline, numeric_features),
+            ("categorical", categorical_pipeline, category_features),
+        ])
 
 def main():
     clf = DLClassifier()
