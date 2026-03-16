@@ -5,8 +5,9 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.models import Sequential
+from tensorflow.keras.callbacks import EarlyStopping
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -138,6 +139,7 @@ class DLClassifier:
             self.preprocessing_pipeline()
             self.model = Sequential([
                 Dense(32, activation="relu", input_shape=self.input_shape),
+                Dropout(0.2),
                 Dense(16, activation="relu"),
                 Dense(1, activation="sigmoid"),
             ])
@@ -154,12 +156,19 @@ class DLClassifier:
         try:
             self.build_model()
             print("Training model...")
+
+            early_stop = EarlyStopping(
+                monitor='val_loss',
+                patience=5,  # Stop after 5 epochs of no improvement
+                restore_best_weights=True  # Keep the best version of the model
+            )
             self.history = self.model.fit(
                 self.x_train, self.y_train,
                 validation_data=(self.x_test, self.y_test),
                 epochs=50,
                 batch_size=32,
-                verbose=1
+                verbose=1,
+                callbacks=[early_stop],
             )
         except Exception as e:
             print(f"Error during training: {e}")
@@ -173,8 +182,8 @@ class DLClassifier:
             self.train_model()
             loss, accuracy = self.model.evaluate(self.x_test, self.y_test, verbose=0)  # this return loss and accuracy
             print(separator)
-            print(f"Test Loss: {loss:.4f}")
-            print(f"Test Accuracy: {accuracy:.4f}")
+            print(f"Test Loss: {loss*100:.2f}%")
+            print(f"Test Accuracy: {accuracy*100:.2f}%")
         except Exception as e:
             print(f"Error while evaluating model: {e}")
 
