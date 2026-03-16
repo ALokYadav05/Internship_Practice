@@ -1,11 +1,9 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -23,6 +21,10 @@ class DLClassifier:
         self.preprocessor = None
 
     def read_data(self):
+        """
+        This method is used to read the data from the csv file
+        :return: None
+        """
         try:
             self.df = pd.read_csv("../Dataset/Titanic_dataset.csv")
             print(self.df.head(), end=separator)
@@ -32,6 +34,10 @@ class DLClassifier:
             print(f"Error while reading data: {e}")
 
     def preprocess(self):
+        """
+        This method is used to preprocess the data
+        :return: None
+        """
         try:
             print(f"Columns: {self.df.columns}", end=separator)
             self.df.info()
@@ -57,6 +63,10 @@ class DLClassifier:
             print(f"Error while preprocessing: {e}")
 
     def visualize(self):
+        """
+        This method is used to visualize the data
+        :return: None
+        """
         plt.figure(figsize=(10, 8))
         corr = self.df.corr(numeric_only=True)
         sns.heatmap(corr, annot=True, cmap='coolwarm')
@@ -64,6 +74,10 @@ class DLClassifier:
         plt.show()
 
     def preprocessing_pipeline(self):
+        """
+        This method is used to define pipeline for numeric & categorical features
+        :return: None
+        """
         numeric_features = ["Age", "Fare", "Pclass", "FamilySize"]
         category_features = ["Embarked", "Sex"]
 
