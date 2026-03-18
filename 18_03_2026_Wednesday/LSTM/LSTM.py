@@ -37,7 +37,7 @@ class SentimentAnalysis:
                     'Not good at all',
                     'Superb performance',
                     'Terrible service'
-                ],
+                ],  
                 'Sentiment': [1, 1, 0, 0, 1, 0, 1, 0, 1, 0]
             }
             self.data = pd.DataFrame(data)
