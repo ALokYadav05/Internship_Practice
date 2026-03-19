@@ -7,6 +7,9 @@ from tensorflow.keras.layers import Embedding, SimpleRNN, Dense
 separate = f"\n\n{'--'*50}\n\n"
 
 class ModelRNN:
+    """
+    This class is used to build RNN model
+    """
     def __init__(self):
         self.data = None
         self.sentences = None
@@ -17,6 +20,10 @@ class ModelRNN:
         self.model = None
 
     def load_data(self):
+        """
+        This method is used to load data
+        :return: None
+        """
         try:
             self.sentences = [
                 "i hate this film",
@@ -36,6 +43,10 @@ class ModelRNN:
             print(f"Error while loading data: {e}")
 
     def preprocessing(self):
+        """
+        This method is used to preprocess the data
+        :return: None
+        """
         try:
             self.load_data()
             self.tokenizer.fit_on_texts(self.sentences)
@@ -49,6 +60,10 @@ class ModelRNN:
             print(f"Error during Preprocessing: {e}")
 
     def model_building(self):
+        """
+        This method is used to build RNN model
+        :return: None
+        """
         try:
             self.preprocessing()
             vocab_size = len(self.tokenizer.word_index) + 1
@@ -67,6 +82,10 @@ class ModelRNN:
             print(f"Error while building Model: {e}")
 
     def training(self):
+        """
+        This method is used to train the model
+        :return: None
+        """
         try:
             self.model_building()
             self.model.fit(
@@ -78,6 +97,10 @@ class ModelRNN:
             print(f"Error while training: {e}")
 
     def predict(self):
+        """
+        This method is used to predict the sentiment
+        :return: None
+        """
         try:
             self.training()
             test = ['Movie was good enough']
