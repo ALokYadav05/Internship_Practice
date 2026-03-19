@@ -65,12 +65,23 @@ class ModelRNN:
         except Exception as e:
             print(f"Error while building Model: {e}")
 
+    def training(self):
+        try:
+            self.model.fit(
+                self.padded_sequences,
+                self.labels,
+                epochs=20
+            )
+        except Exception as e:
+            print(f"Error while training: {e}")
+
 
 def main():
     rnn = ModelRNN()
     rnn.load_data()
     rnn.preprocessing()
     rnn.model_building()
+    rnn.training()
 
 if __name__ == "__main__":
     main()
