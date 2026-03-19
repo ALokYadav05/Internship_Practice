@@ -37,7 +37,7 @@ class ModelRNN:
                 "this movie is terrible",
                 "bad acting"
             ]
-            self.labels = np.array([0, 0, 1, 1, 1, 0, 1, 1, 0, 0])
+            self.labels = np.array([0, 0, 1, 1, 1, 0, 1, 1, 0, 0])     # 0 = Negative Sentiment, 1 = Positive Sentiment
 
         except Exception as e:
             print(f"Error while loading data: {e}")
@@ -49,8 +49,10 @@ class ModelRNN:
         """
         try:
             self.load_data()
+            # Convert text words into unique integer IDs
             self.tokenizer.fit_on_texts(self.sentences)
             sequences = self.tokenizer.texts_to_sequences(self.sentences)
+            # Ensure all sequences are the same length by adding zeros at the end ('post' padding)
             self.padded_sequences = pad_sequences(sequences, padding='post')
 
             print(f"Word-Index: \n{self.tokenizer.word_index}", end=separate)
@@ -68,6 +70,7 @@ class ModelRNN:
             self.preprocessing()
             vocab_size = len(self.tokenizer.word_index) + 1
             self.model = Sequential([
+                # embedding turns word IDs into dense vectors of fixed size (16)
                 Embedding(input_dim=vocab_size, output_dim=16),
                 SimpleRNN(16),
                 Dense(1, activation='sigmoid')
