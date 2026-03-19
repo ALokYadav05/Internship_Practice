@@ -36,10 +36,23 @@ class ModelRNN:
         except Exception as e:
             print(f"Error while loading data: {e}")
 
+    def preprocessing(self):
+        try:
+            self.tokenizer.fit_on_texts(self.sentences)
+            sequences = self.tokenizer.texts_to_sequences(self.sentences)
+            self.padded_sequences = pad_sequences(sequences, padding='post')
+
+            print(f"Word-Index: \n{self.tokenizer.word_index}", end=separate)
+            print(f"Sequences: \n{sequences}", end=separate)
+            print(f"Padded-Sequences: \n{self.padded_sequences}", end=separate)
+        except Exception as e:
+            print(f"Error during Preprocessing: {e}")
+
 
 def main():
     rnn = ModelRNN()
     rnn.load_data()
+    rnn.preprocessing()
 
 if __name__ == "__main__":
     main()
