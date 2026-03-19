@@ -75,6 +75,23 @@ class ModelRNN:
         except Exception as e:
             print(f"Error while training: {e}")
 
+    def predict(self):
+        try:
+            test = ['Movie was good enough']
+            seq = self.tokenizer.texts_to_sequences(test)
+            padded = pad_sequences(seq, maxlen=self.padded_sequences.shape[1],
+                                   padding='post')
+            prediction = self.model.predict(padded)
+
+            print(f"prediction: {prediction}")
+
+            if prediction > 0.5:
+                print(f"Sentiment: Positive!")
+            else:
+                print(f"sentiment: Negative!")
+        except Exception as e:
+            print(f"Error while predicting: {e}")
+
 
 def main():
     rnn = ModelRNN()
@@ -82,6 +99,7 @@ def main():
     rnn.preprocessing()
     rnn.model_building()
     rnn.training()
+    rnn.predict()
 
 if __name__ == "__main__":
     main()
