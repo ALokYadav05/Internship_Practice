@@ -17,9 +17,29 @@ class ModelRNN:
         self.tokenizer = Tokenizer()
         self.model = None
 
+    def load_data(self):
+        try:
+            self.sentences = [
+                "i hate this film",
+                "movie was bad",
+                "i like this film",
+                "this movie is amazing",
+                "film was nice",
+                "film was boring",
+                "good acting",
+                "movie was good",
+                "this movie is terrible",
+                "bad acting"
+            ]
+            self.labels = np.array([0, 0, 1, 1, 1, 0, 1, 1, 0, 0])
+
+        except Exception as e:
+            print(f"Error while loading data: {e}")
+
 
 def main():
     rnn = ModelRNN()
+    rnn.load_data()
 
 if __name__ == "__main__":
     main()
