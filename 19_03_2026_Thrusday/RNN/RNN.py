@@ -48,11 +48,29 @@ class ModelRNN:
         except Exception as e:
             print(f"Error during Preprocessing: {e}")
 
+    def model_building(self):
+        try:
+            vocab_size = len(self.tokenizer.word_index) + 1
+            self.model = Sequential([
+                Embedding(input_dim=vocab_size, output_dim=16),
+                SimpleRNN(16),
+                Dense(1, activation='sigmoid')
+            ])
+            self.model.compile(
+                optimizer='adam',
+                loss='binary_crossentropy',
+                metrics=['accuracy']
+            )
+            print(self.model.summary())
+        except Exception as e:
+            print(f"Error while building Model: {e}")
+
 
 def main():
     rnn = ModelRNN()
     rnn.load_data()
     rnn.preprocessing()
+    rnn.model_building()
 
 if __name__ == "__main__":
     main()
