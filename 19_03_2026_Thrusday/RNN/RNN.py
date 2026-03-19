@@ -37,7 +37,7 @@ class ModelRNN:
                 "this movie is terrible",
                 "bad acting"
             ]
-            self.labels = np.array([0, 0, 1, 1, 1, 0, 1, 1, 0, 0])     # 0 = Negative Sentiment, 1 = Positive Sentiment
+            self.labels = np.array([0, 0, 1, 1, 1, 0, 1, 1, 0, 0])   # 0 = Negative Sentiment, 1 = Positive Sentiment
 
         except Exception as e:
             print(f"Error while loading data: {e}")
@@ -71,7 +71,11 @@ class ModelRNN:
             vocab_size = len(self.tokenizer.word_index) + 1
             self.model = Sequential([
                 # embedding turns word IDs into dense vectors of fixed size (16)
-                Embedding(input_dim=vocab_size, output_dim=16),
+                Embedding(
+                    input_dim=vocab_size,
+                    output_dim=16,          # one word will be demonstrated as this vector length
+                    input_shape=self.padded_sequences.shape[1]  # takes, the maximum len of input (4)
+                ),
                 SimpleRNN(16),
                 Dense(1, activation='sigmoid')
             ])
@@ -111,9 +115,7 @@ class ModelRNN:
             padded = pad_sequences(seq, maxlen=self.padded_sequences.shape[1],
                                    padding='post')
             prediction = self.model.predict(padded)
-
             print(f"prediction: {prediction}")
-
             if prediction > 0.5:
                 print(f"Sentiment: Positive!")
             else:
