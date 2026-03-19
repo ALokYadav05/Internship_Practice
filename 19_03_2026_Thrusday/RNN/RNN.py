@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
@@ -38,6 +37,7 @@ class ModelRNN:
 
     def preprocessing(self):
         try:
+            self.load_data()
             self.tokenizer.fit_on_texts(self.sentences)
             sequences = self.tokenizer.texts_to_sequences(self.sentences)
             self.padded_sequences = pad_sequences(sequences, padding='post')
@@ -50,6 +50,7 @@ class ModelRNN:
 
     def model_building(self):
         try:
+            self.preprocessing()
             vocab_size = len(self.tokenizer.word_index) + 1
             self.model = Sequential([
                 Embedding(input_dim=vocab_size, output_dim=16),
@@ -67,6 +68,7 @@ class ModelRNN:
 
     def training(self):
         try:
+            self.model_building()
             self.model.fit(
                 self.padded_sequences,
                 self.labels,
@@ -77,6 +79,7 @@ class ModelRNN:
 
     def predict(self):
         try:
+            self.training()
             test = ['Movie was good enough']
             seq = self.tokenizer.texts_to_sequences(test)
             padded = pad_sequences(seq, maxlen=self.padded_sequences.shape[1],
@@ -92,13 +95,8 @@ class ModelRNN:
         except Exception as e:
             print(f"Error while predicting: {e}")
 
-
 def main():
     rnn = ModelRNN()
-    rnn.load_data()
-    rnn.preprocessing()
-    rnn.model_building()
-    rnn.training()
     rnn.predict()
 
 if __name__ == "__main__":
