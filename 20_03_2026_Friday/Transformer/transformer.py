@@ -65,6 +65,36 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
 
+class SentenceBuilder(tf.keras.Model):
+    """
+    This class is used to a tiny version of the GPT model used for generating text.
+    """
+
+    def __init__(self, vocab_size, d_model=64, num_heads=4, num_layers=2, max_len=100):
+        super().__init__()
+        self.d_model = d_model
+        self.embedding = layers.Embedding(vocab_size, d_model)
+        self.pos_emb = layers.Embedding(max_len, d_model)
+        self.blocks = [TransformerBlock(d_model, num_heads, d_model * 4) for _ in range(num_layers)]
+        self.dropout = layers.Dropout(0.1)
+        self.final_layer = layers.Dense(vocab_size)
+
+    def call(self, x, training=False):
+        """
+        Runs the input through embeddings and all transformer blocks to get a prediction.
+        """
+        seq_len = tf.shape(x)[1]
+        positions = tf.range(start=0, limit=seq_len, delta=1)
+
+        x = self.embedding(x) + self.pos_emb(positions)
+        x = self.dropout(x, training=training)
+
+        for block in self.blocks:
+            # FIX: Pass training as a keyword argument
+            x = block(x, training=training)
+
+        return self.final_layer(x)
+
 def main():
     """
     The main script: prepares data, trains the model, and tests it out.
@@ -84,6 +114,34 @@ def main():
     for s in training_samples:
         all_encoded.extend(tokenizer.encode(s))
 
+    # Simple sliding window for data
+    xs, ys = [], []
+    seq_len = 4
+    for i in range(len(all_encoded) - seq_len):
+        xs.append(all_encoded[i: i + seq_len])
+        ys.append(all_encoded[i + 1: i + seq_len + 1])
+
+    X, Y = np.array(xs), np.array(ys)
+
+    model = SentenceBuilder(vocab_size=tokenizer.vocab_size)
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.005),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    )
+
+    model.fit(X, Y, epochs=100, verbose=1)
+    print("--- Training Complete ---\n")
+
+    def generate(prompt, length=4):
+        tokens = tokenizer.encode(prompt)
+        for _ in range(length):
+            input_tokens = np.array([tokens])
+            preds = model(input_tokens, training=False)
+            next_id = tf.argmax(preds[0, -1, :]).numpy()
+            tokens.append(next_id)
+        return f"Input: {prompt}", tokenizer.decode(tokens)
+
+    print(f"Result: {generate('deep learning')}")
 
 if __name__ == "__main__":
     main()
