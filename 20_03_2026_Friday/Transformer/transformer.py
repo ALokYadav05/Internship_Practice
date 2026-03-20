@@ -31,8 +31,10 @@ class TransformerBlock(layers.Layer):
     This class is used to a single 'brain cell' layer that helps the model
     focus on different parts of a sentence.
     """
-
     def __init__(self, d_model, num_heads, dff, rate=0.1):
+        """
+        Sets up the attention mechanism and the neural network layers.
+        """
         super().__init__()
         self.mha = layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model)
         self.ffn = tf.keras.Sequential([
@@ -69,8 +71,10 @@ class SentenceBuilder(tf.keras.Model):
     """
     This class is used to a tiny version of the GPT model used for generating text.
     """
-
     def __init__(self, vocab_size, d_model=64, num_heads=4, num_layers=2, max_len=100):
+        """
+        Initializes the word embeddings and stacks the transformer blocks.
+        """
         super().__init__()
         self.d_model = d_model
         self.embedding = layers.Embedding(vocab_size, d_model)
@@ -133,6 +137,9 @@ def main():
     print("--- Training Complete ---\n")
 
     def generate(prompt, length=4):
+        """
+        Predicts the next few words based on the prompt you provide.
+        """
         tokens = tokenizer.encode(prompt)
         for _ in range(length):
             input_tokens = np.array([tokens])
