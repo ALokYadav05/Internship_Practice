@@ -32,6 +32,7 @@ class ShortTermMemory:
         """
         Adds a new message to short-term memory (RAM).
         If RAM is full, the oldest message is moved to MongoDB.
+        :return: added message to memory
         """
         if len(self.memory) == self.memory.maxlen:
             oldest_msg = self.memory.popleft()
@@ -42,7 +43,7 @@ class ShortTermMemory:
     def get_messages(self):
         """
         Returns the current messages stored in RAM as a list
-        :return:
+        :return: message as a list
         """
         return list(self.memory)
 
@@ -50,6 +51,7 @@ class ShortTermMemory:
 def get_long_term_context(limit=4):
     """
     Retrieves the last few messages store in MongoDB.
+    :returns: message stored in MongoDB 
     """
     messages = mongo_memory.messages
     if not messages:
