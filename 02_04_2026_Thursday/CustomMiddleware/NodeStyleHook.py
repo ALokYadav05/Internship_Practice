@@ -9,6 +9,16 @@ from langgraph.runtime import Runtime  # Import Runtime for type hinting
 
 load_dotenv()
 
+"""
+----- Node-style Hook Middleware -----
+-> These are simple functions that the agent triggers at specific, fixed moments in its lifecycle.
+-> You cannot stop the agent or change how it moves to the next step. 
+
+Logic: "When you reach this point, run my code, then keep going."
+Example (Security Camera): A camera records everyone entering a building. It doesn't stop them or ask questions;
+it just logs that they arrived.
+Use Cases: Logging, counting tokens, or updating a database after a model finishes. 
+"""
 
 #  before model hook -> The "Security Guard"
 @before_model(can_jump_to=["end"])
