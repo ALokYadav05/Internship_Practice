@@ -2,13 +2,13 @@ import os
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_ollama.embeddings import OllamaEmbeddings
 # from langchain_mistralai import ChatMistralAI
 from langchain_ollama.chat_models import ChatOllama
-from mongoDB_storage import save_message, get_all_messages
 from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware
+from mongoDB_storage import memory
 
 load_dotenv()
 
@@ -21,59 +21,41 @@ def main ():
     """
     This is the main function
     """
-    global all_data
-    global messages
+
     try:
+        file_path = ["../Data/company_policies.pdf","..Data/faq.pdf","..Data/product_manual.pdf"]
+        all_data=[]
 
-        try:
-            file_path = ["company_policies.pdf","faq.pdf","product_manual.pdf"]
-            all_data=[]
+        for path in file_path:
+            loader = PyPDFLoader(path)
+            docs = loader.load()
+            splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
+            split_text = splitter.split_documents(docs)
 
-            for path in file_path:
-                loader = PyPDFLoader(path)
-                docs = loader.load()
-                document = [doc.page_content for doc in docs]
-                print(document)
+            all_data.extend(split_text)
 
-                splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=175)
-                split_text = splitter.split_text(document)
+        embedder = OllamaEmbeddings(model=EMBEDDING_MODEL,base_url=BASE_URL)
 
-                all_data.extend(split_text)
+        vector_store = Chroma.from_documents(
+                                documents=all_data,
+                                embedding=embedder,
+                                persist_directory="./chroma")
 
-        except Exception as e:
-            print(f"Error while splitting-text: {e}")
-
-        try:
-            embedder = OllamaEmbeddings(model=EMBEDDING_MODEL)
-
-            if os.path.exists('./chroma_db'):
-                vector_store = Chroma(
-                    embedding_function=embedder,
-                    persist_directory="chroma_db")
-            else:
-                vector_store = Chroma.from_documents(
-                                        all_data,
-                                        embedder,
-                                        persist_directory="chroma_db")
-                vector_store.persist()
-
-            retriever = vector_store.as_retriever(
-                                    search_type='mmr',
-                                    search_kwargs= {
-                                        'k' : 2,
-                                        'fetch_k' : 10,
-                                        'lambda_mat' : 0.75
-                                    }
-                                )
-        except Exception as e:
-            print(f"Error while Storing in Chroma : {e}")
+        retriever = vector_store.as_retriever(
+                                search_type='mmr',
+                                search_kwargs= {
+                                    'k' : 2,
+                                    'fetch_k' : 10,
+                                    'lambda_mult' : 0.75
+                                }
+                            )
 
         system_prompt = """
                         ## You are a helpful RAG Chatbot.
-                        
-                        #  Before giving any answer make sure you check the query carefully.
-                        #  Do not hallucinate make sure to answer from the provided context.
-                        #  If you don't know something say I Don't know.
+                        ## Rules:
+                           Respond normally to greetings like (hi,hello).
+                           If query is knowledge based, use the context to answer the question.
+                           If user ask about previous conversation, summarize it and give it to user.
                         """
 
         llm = ChatOllama(
@@ -88,49 +70,47 @@ def main ():
                         middleware=[
                             SummarizationMiddleware(
                                 model=llm,
-                                trigger=('messages',6),
+                                trigger=[('messages',6)],
                                 keep=('messages',6)
                             )
-                        ]
+                        ],
+            checkpointer=memory
 
                     )
 
         session_id = "user_1"
-        messages = []
+        config = {'configurable': {'thread_id':session_id}}
+
+        print("\n\n #### --- Welcome to CHATBOT --- #### \n\n")
+        print("Enter your Query (Type exit to close):")
 
         try:
             while True:
-                print("\n\n #### --- Welcome to CHATBOT --- #### \n\n")
-                query = input("You: Enter your Query (Type exit to close): \n")
+                query = input("You: \n")
 
                 if query.lower() == "exit":
                     break
 
-                user_input = """
+                docs = retriever.invoke(query)
+                context = "".join([doc.page_content for doc in docs])
+
+                user_input = f"""
                              Answer the Question from the following context below:
                              context
                              {context}
                              
-                             question
-                             {question}
+                             query
+                             {query}
                              """
 
-                messages = {'role':'user','content': user_input}
-                config = {'configurable' : {'thread_id':"1"}}
+                messages = [{'role':'user','content': user_input}]
+
 
                 result = agent.invoke({
                                 "messages": messages
                             }, config=config)
 
-                print(f"Result : {result["messages"][-1].content}")
-
-                save_message(session_id,'user',query)  # saving user query
-                save_message(session_id,'AI',result)   # saving result generated by the AI
-
-                messages = result['messages']
-
-            hist = get_all_messages(session_id)
-            print(hist)
+                print(f"Result : {result['messages'][-1].content}")
 
         except Exception as e:
             print(f"Error in while-loop: {e}")
