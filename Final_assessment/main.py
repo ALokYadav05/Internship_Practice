@@ -23,7 +23,7 @@ def main ():
     """
 
     try:
-        file_path = ["../Data/company_policies.pdf","..Data/faq.pdf","..Data/product_manual.pdf"]
+        file_path = ["./Data/company_policies.pdf","./Data/faq.pdf","./Data/product_manual.pdf"]
         all_data=[]
 
         for path in file_path:
