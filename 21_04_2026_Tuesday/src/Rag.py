@@ -17,7 +17,7 @@ def get_retriever():
              "product_manual.pdf"
              ]
     for file in files:
-        loader = PyPDFLoader(f"Database/{file}")
+        loader = PyPDFLoader(f"Data/{file}")
         docs = loader.load()
         all_docs.extend(docs)
 
