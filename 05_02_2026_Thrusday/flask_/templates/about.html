@@ -1,0 +1,8 @@
+<!-- This is inheriting from parent index.html, so we don't need to again write HTML for different pages-->
+
+{% extends "index.html" %}
+{%block title%} About-Page {%end block%}
+
+{% block body %}
+<h1> {{msg}} </h1>
+{% end block %}
