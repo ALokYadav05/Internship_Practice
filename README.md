@@ -14,9 +14,9 @@ Each folder follows a `DD_MM_YYYY_Day` naming convention to keep the logs chrono
 
 ## Tech Stack & Skills
 *List the primary tools you are using during your internship:*
-- **Languages:** (e.g., Python)
-- **Frameworks:** (e.g., Flask, FastAPI, PyMongo, SQLAlchemy, PYODBC, GITFLOW, Scikit - learn, 
-  TensorFlow, Keras, LangChain, LLMS)
-- **Tools:** (e.g. Git, Postman, LangSmith)
-- **Database**:** (e.g., MongoDB, MySQL)
+- **Languages:** (e.g., Python, SQL)
+- **Frameworks:** (e.g., Flask, FastAPI, PyMongo, SQLAlchemy, PYODBC, GITFLOW, Scikit - learn)
+- **Tools:** (e.g. Git, Postman)
+
 *Created and maintained by Alok Yadav. Feel free to reach out if you have questions about any of the implementations!*
+[chroma](Final_assessment/chroma)
