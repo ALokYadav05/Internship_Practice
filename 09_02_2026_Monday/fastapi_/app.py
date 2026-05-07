@@ -25,7 +25,8 @@ def get_all_task():
 @app.post('/task', tags=['POST'])
 def add_task(task: Task):
     task_dict = task.model_dump(exclude_unset=True)  # we convert pydantic object task to simple dictionary,
-                                               # bcz when we write task:Task , the data comes object. (exclude_unset=True) -> ensure that only take values that user define
+                                                 # bcz when we write task:Task , the data comes object.
+                                                 # (exclude_unset=True) -> ensure that only take values that user define
     task_db.append(task_dict)
     return task_db
 
