@@ -6,12 +6,11 @@ from langchain_core.tools import tool
 from langchain.agents import create_agent
 from langchain.agents.middleware import before_model, after_model, AgentState
 from langgraph.runtime import Runtime  # Import Runtime for type hinting
-
 load_dotenv()
 
 """
 ----- Node-style Hook Middleware -----
--> These are simple functions that the agent triggers at specific, fixed moments in its lifecycle.
+-> These are simple functions THAT the agent triggers at specific, fixed moments in its lifecycle.
 -> You cannot stop the agent or change how it moves to the next step. 
 
 Logic: "When you reach this point, run my code, then keep going."
