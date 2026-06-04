@@ -1,10 +1,12 @@
-from urllib.parse  import urljoin
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import requests
 
 url = "https://beautiful-soup-4.readthedocs.io/en/latest/"
 
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/144.0.0.0 Safari/537.36'}
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko)'
+                         'Chrome/144.0.0.0 Safari/537.36'}
+
 
 def basic_config():
     """
@@ -27,8 +29,9 @@ def find_all_urls(soup):
 
     try:
         for link in soup.find_all('a'):
-            href = link.get('href',"No-Link")
-            full_url = urljoin(url,href)        # using this now i can extract relative paths like this -> #multi-valued-attributes, #id12
+            href = link.get('href', "No-Link")
+            full_url = urljoin(url, href)  # using this now I can extract relative paths like this
+            # -> #multi-valued-attributes, #id12
 
             print(full_url)
     except Exception as e:
@@ -41,7 +44,9 @@ def css_selector(soup):
     """
 
     try:
-        data = soup.select_one("div.section#beautiful-soup-documentation")  # 1st-way   (div.div_name#id_name)  select_one() gives us first element
+        data = soup.select_one(
+            "div.section#beautiful-soup-documentation")
+        # 1st-way   (div.div_name#id_name)  select_one() gives us first element
         # data = soup.find_all("div",id = "beautiful-soup-documentation")   #normal soup-way
         for d in data:
             print(d.get_text())
@@ -55,12 +60,7 @@ def css_selector(soup):
         print(f" Unexpected error: {e}")
 
 
-
-
-
 if __name__ == "__main__":
     soup_obj = basic_config()
     # find_all_urls(soup_obj)
     css_selector(soup_obj)
-
-
